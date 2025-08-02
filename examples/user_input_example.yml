@@ -1,0 +1,40 @@
+# Example User Input YAML for Network Configuration
+
+bgp:
+  asn: 65001
+  router_id: 192.0.2.1
+  neighbors:
+    - ip: 192.0.2.2
+      remote_as: 65002
+      description: "ISP Connection"
+
+prefix_lists:
+  - name: "PL-ALLOWED"
+    entries:
+      - seq: 10
+        action: "permit"
+        prefix: "10.0.0.0/8"
+  
+interfaces:
+  - name: "Ethernet1"
+    description: "Uplink Interface"
+    ip_address: "192.0.2.10"
+    subnet_mask: 24
+
+vlans:
+  - id: 10
+    name: "Users"
+
+hostname: "NetworkDevice01"
+ntp_servers:
+  - "130.88.200.4"
+  - "192.168.1.1"
+
+snmp:
+  communities:
+    - name: "public"
+      permission: "ro"
+  hosts:
+    - "10.0.0.1"
+    - "10.0.0.2"
+

@@ -1,0 +1,38 @@
+!
+! System-wide Configuration
+!
+{%- if hostname %}
+hostname {{ hostname }}
+{%- endif %}
+
+{%- if banner_motd %}
+! Message of the Day
+banner motd @
+{{ banner_motd }}
+@
+{%- endif %}
+
+{%- if ntp_servers %}
+! NTP Servers
+{%- for ntp in ntp_servers %}
+ntp server {{ ntp }}
+{%- endfor %}
+{%- endif %}
+
+{%- if logging %}
+! Logging
+{%- for log in logging %}
+logging host {{ log.host }}
+{%- endfor %}
+{%- endif %}
+
+{%- if snmp %}
+! SNMP
+{%- for community in snmp.communities %}
+snmp-server community {{ community.name }} {{ community.permission }}
+{%- endfor %}
+{%- for host in snmp.hosts %}
+snmp-server host {{ host }}
+{%- endfor %}
+{%- endif %}
+!

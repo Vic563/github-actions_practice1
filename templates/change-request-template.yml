@@ -1,0 +1,7 @@
+# Example Change Request Template
+
+device: "Device name or ID"
+date: "YYYY-MM-DD"
+description: "Brief description of the change"
+changes: 
+  - "List of changes"

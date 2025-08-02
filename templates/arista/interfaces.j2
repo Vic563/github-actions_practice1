@@ -1,0 +1,44 @@
+!
+! Interface Configuration
+!
+{%- for interface in interfaces %}
+interface {{ interface.name }}
+{%- if interface.description %}
+   description {{ interface.description }}
+{%- endif %}
+{%- if interface.ip_address %}
+   ip address {{ interface.ip_address }}/{{ interface.subnet_mask }}
+{%- endif %}
+{%- if interface.switchport %}
+   switchport
+   {%- if interface.switchport.mode %}
+   switchport mode {{ interface.switchport.mode }}
+   {%- endif %}
+   {%- if interface.switchport.access_vlan %}
+   switchport access vlan {{ interface.switchport.access_vlan }}
+   {%- endif %}
+   {%- if interface.switchport.trunk_vlans %}
+   switchport trunk allowed vlan {{ interface.switchport.trunk_vlans }}
+   {%- endif %}
+   {%- if interface.switchport.native_vlan %}
+   switchport trunk native vlan {{ interface.switchport.native_vlan }}
+   {%- endif %}
+{%- endif %}
+{%- if interface.channel_group %}
+   channel-group {{ interface.channel_group.number }} mode {{ interface.channel_group.mode }}
+{%- endif %}
+{%- if interface.spanning_tree %}
+   {%- if interface.spanning_tree.portfast %}
+   spanning-tree portfast
+   {%- endif %}
+   {%- if interface.spanning_tree.bpduguard %}
+   spanning-tree bpduguard enable
+   {%- endif %}
+{%- endif %}
+{%- if interface.shutdown is defined and interface.shutdown %}
+   shutdown
+{%- else %}
+   no shutdown
+{%- endif %}
+!
+{%- endfor %}

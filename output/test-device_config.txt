@@ -1,0 +1,19 @@
+!
+! BGP Configuration
+!
+router bgp 65001
+   router-id 192.0.2.1
+   maximum-paths 4   ! BGP Neighbors   neighbor 192.0.2.2 remote-as 65002
+   neighbor 192.0.2.2 description ISP Connection!
+!
+! Routing Filters - Route Maps and Prefix Lists
+!! Prefix Listsip prefix-list PL-ALLOWED   seq 10 permit 10.0.0.0/8!
+!
+! Interface Configuration
+!interface Ethernet1   description Uplink Interface   ip address 192.0.2.10/24   no shutdown!
+!
+! VLAN Configuration
+!vlan 10   name Users!
+!
+! System-wide Configuration
+!hostname NetworkDevice01! NTP Serversntp server 130.88.200.4ntp server 192.168.1.1! SNMPsnmp-server community public rosnmp-server host 10.0.0.1snmp-server host 10.0.0.2!

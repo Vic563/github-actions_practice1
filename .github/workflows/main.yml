@@ -1,0 +1,36 @@
+name: Network Configuration Pipeline
+
+on:
+  pull_request:
+    paths:
+      - 'changes/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Render Configuration
+      run: |
+        for input_file in changes/**/*.yml; do
+          python scripts/render_config.py "$input_file" --validate
+        done
+
+    - name: Update ServiceNow (Placeholder)
+      run: echo "Updating ServiceNow status..."
+
+    - name: Cleanup
+      run: echo "Cleanup tasks after CI"
+

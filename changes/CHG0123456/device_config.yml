@@ -1,0 +1,37 @@
+# ServiceNow Change Request: CHG0123456
+# Device: Core-Switch-01
+# Description: Adding new BGP neighbor and VLAN configuration
+
+# BGP Configuration
+bgp:
+  asn: 65100
+  router_id: 10.1.1.1
+  neighbors:
+    - ip: 10.1.1.2
+      remote_as: 65200
+      description: "New ISP Connection"
+
+# Interface Configuration  
+interfaces:
+  - name: "Ethernet1/1"
+    description: "Uplink to ISP"
+    ip_address: "10.1.1.1"
+    subnet_mask: 30
+  - name: "Ethernet1/2"
+    description: "Server Connection"
+    switchport:
+      mode: "access"
+      access_vlan: 100
+
+# VLAN Configuration
+vlans:
+  - id: 100
+    name: "Production_Servers"
+  - id: 200
+    name: "Management"
+
+# System Configuration
+hostname: "Core-Switch-01"
+ntp_servers:
+  - "10.0.0.10"
+  - "10.0.0.11"
