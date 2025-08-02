@@ -88,13 +88,14 @@ class ConfigRenderer:
             print(f"❌ Error rendering template {template_name}: {e}")
             return ""
     
-    def render_all_templates(self, data, device_name="device"):
+    def render_all_templates(self, data, device_name="device", output_file=None):
         """
         Render all templates and create complete configuration
         
         Args:
             data (dict): Input data from YAML file
             device_name (str): Name of the device for output file
+            output_file (Path): Custom output file path
             
         Returns:
             str: Complete rendered configuration
@@ -113,8 +114,9 @@ class ConfigRenderer:
         # Combine all sections
         complete_config = "\n".join(config_sections)
         
-        # Write to output file
-        output_file = self.output_dir / f"{device_name}_config.txt"
+        # Write to output file in change request folder
+        if not output_file:
+            output_file = self.output_dir / f"{device_name}_config.txt"
         with open(output_file, 'w') as f:
             f.write(complete_config)
         
@@ -163,7 +165,7 @@ def main():
     parser.add_argument('input_file', help='Path to YAML input file')
     parser.add_argument('--device-name', default='device', help='Device name for output file')
     parser.add_argument('--templates-dir', default='templates/arista', help='Templates directory')
-    parser.add_argument('--output-dir', default='output', help='Output directory')
+    parser.add_argument('--output-dir', default=None, help='Output directory')
     parser.add_argument('--validate', action='store_true', help='Validate rendered configuration')
     
     args = parser.parse_args()
@@ -171,14 +173,20 @@ def main():
     # Initialize renderer
     renderer = ConfigRenderer(
         templates_dir=args.templates_dir,
-        output_dir=args.output_dir
+        output_dir=args.output_dir or "output"
     )
     
     # Load input data
     data = renderer.load_yaml_input(args.input_file)
     
     # Render configuration
-    config = renderer.render_all_templates(data, args.device_name)
+    # Determine the output path within the change request folder
+    if args.output_dir:
+        output_file = Path(args.output_dir) / f"{args.device_name}_config.txt"
+    else:
+        output_file = Path(args.input_file).parent / f"{args.device_name}_config.txt"
+
+    config = renderer.render_all_templates(data, args.device_name, output_file)
     
     # Validate if requested
     if args.validate:

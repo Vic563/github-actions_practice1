@@ -1,0 +1,36 @@
+# Change Request: CHG0123456
+# Device: switch01
+# Description: Basic switch configuration
+
+# BGP Configuration
+bgp:
+  asn: 65001
+  router_id: 192.168.1.10
+  neighbors:
+    - ip: 192.168.1.1
+      remote_as: 65000
+      description: "Core Router Connection"
+
+# Interface Configuration  
+interfaces:
+  - name: "Ethernet1"
+    description: "Uplink to Core"
+    ip_address: "192.168.1.10"
+    subnet_mask: 24
+  - name: "Ethernet2"
+    description: "Access Port"
+    switchport:
+      mode: "access"
+      access_vlan: 10
+
+# VLAN Configuration
+vlans:
+  - id: 10
+    name: "Users"
+  - id: 20
+    name: "Servers"
+
+# System Configuration
+hostname: "switch01"
+ntp_servers:
+  - "192.168.1.1"

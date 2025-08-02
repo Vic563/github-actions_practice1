@@ -1,6 +1,9 @@
 name: Network Configuration Pipeline
 
 on:
+  push:
+    paths:
+      - 'changes/**'
   pull_request:
     paths:
       - 'changes/**'
@@ -25,11 +28,25 @@ jobs:
     - name: Render Configuration
       run: |
         for input_file in changes/**/*.yml; do
-          python scripts/render_config.py "$input_file" --validate
+          if [[ -f "$input_file" ]]; then
+            # Extract device name from filename (remove _config.yml suffix)
+            device_name=$(basename "$input_file" _config.yml)
+            python scripts/render_config.py "$input_file" --device-name "$device_name" --validate
+          fi
         done
 
-    - name: Update ServiceNow (Placeholder)
-      run: echo "Updating ServiceNow status..."
+    - name: Commit rendered configurations
+      if: github.event_name == 'push'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add changes/
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Auto-render configurations from YAML templates"
+          git push
+        fi
 
     - name: Cleanup
       run: echo "Cleanup tasks after CI"
