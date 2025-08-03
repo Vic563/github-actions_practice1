@@ -1,0 +1,232 @@
+! ─────────────────────────────────────────────────────────────────────────────
+! System Basics
+! ─────────────────────────────────────────────────────────────────────────────
+{% if device_config.hostname is defined %}
+hostname {{ device_config.hostname }}
+{% else %}
+hostname {{ device_name }}
+{% endif %}
+management api http-commands
+   no shutdown
+!
+{% if device_config.users is defined %}
+{% for user in device_config.users %}
+username {{ user.name }} secret {{ user.secret }}
+{% endfor %}
+{% else %}
+username admin secret 5 $1$abc$xyz
+{% endif %}
+{% if device_config.enable_secret is defined %}
+enable secret {{ device_config.enable_secret }}
+{% else %}
+enable secret YourEnableSecret
+{% endif %}
+{% if device_config.ntp_servers is defined %}
+{% for ntp in device_config.ntp_servers %}
+ntp server {{ ntp }}
+{% endfor %}
+{% endif %}
+logging buffered 10000
+logging console
+{% if device_config.logging is defined %}
+{% for log in device_config.logging %}
+logging host {{ log.host }}
+{% endfor %}
+{% endif %}
+!
+{% if device_config.snmp is defined %}
+{% for community in device_config.snmp.communities %}
+snmp-server community {{ community.name }} {{ community.permission }}
+{% endfor %}
+{% for host in device_config.snmp.hosts %}
+snmp-server host {{ host }}
+{% endfor %}
+!
+{% endif %}
+
+{% if device_config.vlans is defined %}
+! ─────────────────────────────────────────────────────────────────────────────
+! VLANs
+! ─────────────────────────────────────────────────────────────────────────────
+{% for vlan in device_config.vlans %}
+vlan {{ vlan.id }}
+{% if vlan.name is defined %}
+   name {{ vlan.name }}
+{% endif %}
+{% if vlan.state is defined %}
+   state {{ vlan.state }}
+{% endif %}
+!
+{% endfor %}
+{% endif %}
+
+{% if device_config.svi_interfaces is defined %}
+! ─────────────────────────────────────────────────────────────────────────────
+! SVIs (Layer-3 Interfaces)
+! ─────────────────────────────────────────────────────────────────────────────
+{% for svi in device_config.svi_interfaces %}
+interface Vlan{{ svi.vlan_id }}
+{% if svi.description is defined %}
+   description {{ svi.description }}
+{% endif %}
+{% if svi.ip_address is defined %}
+   ip address {{ svi.ip_address }}/{{ svi.subnet_mask }}
+{% endif %}
+{% if svi.shutdown is defined and svi.shutdown %}
+   shutdown
+{% else %}
+   no shutdown
+{% endif %}
+!
+{% endfor %}
+{% endif %}
+
+{% if device_config.interfaces is defined %}
+! ─────────────────────────────────────────────────────────────────────────────
+! Physical Ethernet Interfaces
+! ─────────────────────────────────────────────────────────────────────────────
+{% for interface in device_config.interfaces %}
+interface {{ interface.name }}
+{% if interface.description is defined %}
+   description "{{ interface.description }}"
+{% endif %}
+{% if interface.ip_address is defined %}
+   ip address {{ interface.ip_address }}/{{ interface.subnet_mask }}
+{% endif %}
+{% if interface.switchport is defined %}
+   switchport
+{% if interface.switchport.mode is defined %}
+   switchport mode {{ interface.switchport.mode }}
+{% endif %}
+{% if interface.switchport.access_vlan is defined %}
+   switchport access vlan {{ interface.switchport.access_vlan }}
+{% endif %}
+{% if interface.switchport.trunk_vlans is defined %}
+   switchport trunk allowed vlan {{ interface.switchport.trunk_vlans }}
+{% endif %}
+{% if interface.switchport.native_vlan is defined %}
+   switchport trunk native vlan {{ interface.switchport.native_vlan }}
+{% endif %}
+{% endif %}
+{% if interface.channel_group is defined %}
+   channel-group {{ interface.channel_group.number }} mode {{ interface.channel_group.mode }}
+{% endif %}
+{% if interface.spanning_tree is defined %}
+{% if interface.spanning_tree.portfast is defined and interface.spanning_tree.portfast %}
+   spanning-tree portfast
+{% endif %}
+{% if interface.spanning_tree.bpduguard is defined and interface.spanning_tree.bpduguard %}
+   spanning-tree bpduguard enable
+{% endif %}
+{% endif %}
+{% if interface.shutdown is defined and interface.shutdown %}
+   shutdown
+{% else %}
+   no shutdown
+{% endif %}
+!
+{% endfor %}
+{% endif %}
+
+{% if device_config.static_routes is defined %}
+! ─────────────────────────────────────────────────────────────────────────────
+! Static Routing
+! ─────────────────────────────────────────────────────────────────────────────
+{% for route in device_config.static_routes %}
+ip route {{ route.network }}/{{ route.mask }} {{ route.next_hop }}
+{% endfor %}
+!
+{% endif %}
+
+{% if device_config.prefix_lists is defined %}
+! ─────────────────────────────────────────────────────────────────────────────
+! Prefix Lists
+! ─────────────────────────────────────────────────────────────────────────────
+{% for prefix_list in device_config.prefix_lists %}
+ip prefix-list {{ prefix_list.name }}
+{% for entry in prefix_list.entries %}
+   seq {{ entry.seq }} {{ entry.action }} {{ entry.prefix }}{% if entry.ge is defined %} ge {{ entry.ge }}{% endif %}{% if entry.le is defined %} le {{ entry.le }}{% endif %}
+{% endfor %}
+!
+{% endfor %}
+{% endif %}
+
+{% if device_config.route_maps is defined %}
+! ─────────────────────────────────────────────────────────────────────────────
+! Route Maps
+! ─────────────────────────────────────────────────────────────────────────────
+{% for route_map in device_config.route_maps %}
+route-map {{ route_map.name }} {{ route_map.action }} {{ route_map.seq }}
+{% if route_map.match is defined %}
+{% for match in route_map.match %}
+   match {{ match.type }} {{ match.value }}
+{% endfor %}
+{% endif %}
+{% if route_map.set is defined %}
+{% for set in route_map.set %}
+   set {{ set.type }} {{ set.value }}
+{% endfor %}
+{% endif %}
+!
+{% endfor %}
+{% endif %}
+
+{% if device_config.bgp is defined %}
+! ─────────────────────────────────────────────────────────────────────────────
+! BGP Configuration (IPv4 Unicast)
+! ─────────────────────────────────────────────────────────────────────────────
+router bgp {{ device_config.bgp.asn }}
+{% if device_config.bgp.router_id is defined %}
+   router-id {{ device_config.bgp.router_id }}
+{% endif %}
+{% if device_config.bgp.maximum_paths is defined %}
+   maximum-paths {{ device_config.bgp.maximum_paths }}
+{% endif %}
+
+{% if device_config.bgp.neighbors is defined %}
+   ! BGP Neighbors
+{% for neighbor in device_config.bgp.neighbors %}
+   neighbor {{ neighbor.ip }} remote-as {{ neighbor.remote_as }}
+{% if neighbor.description is defined %}
+   neighbor {{ neighbor.ip }} description "{{ neighbor.description }}"
+{% endif %}
+{% if neighbor.password is defined %}
+   neighbor {{ neighbor.ip }} password {{ neighbor.password }}
+{% endif %}
+{% if neighbor.update_source is defined %}
+   neighbor {{ neighbor.ip }} update-source {{ neighbor.update_source }}
+{% endif %}
+{% if neighbor.timers is defined %}
+   neighbor {{ neighbor.ip }} timers {{ neighbor.timers.keepalive }} {{ neighbor.timers.holdtime }}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+   address-family ipv4 unicast
+{% if device_config.bgp.networks is defined %}
+{% for network in device_config.bgp.networks %}
+      network {{ network.prefix }}/{{ network.mask }}
+{% endfor %}
+{% endif %}
+{% if device_config.bgp.neighbors is defined %}
+{% for neighbor in device_config.bgp.neighbors %}
+      neighbor {{ neighbor.ip }} activate
+{% if neighbor.next_hop_self is defined and neighbor.next_hop_self %}
+      neighbor {{ neighbor.ip }} next-hop-self
+{% endif %}
+{% if neighbor.route_map_in is defined %}
+      neighbor {{ neighbor.ip }} route-map {{ neighbor.route_map_in }} in
+{% endif %}
+{% if neighbor.route_map_out is defined %}
+      neighbor {{ neighbor.ip }} route-map {{ neighbor.route_map_out }} out
+{% endif %}
+{% endfor %}
+{% endif %}
+{% if device_config.bgp.redistribute is defined %}
+{% for redist in device_config.bgp.redistribute %}
+      redistribute {{ redist.protocol }}{% if redist.route_map is defined %} route-map {{ redist.route_map }}{% endif %}
+{% endfor %}
+{% endif %}
+   exit
+!
+{% endif %}

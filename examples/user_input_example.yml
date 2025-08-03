@@ -1,31 +1,14 @@
 # Example User Input YAML for Network Configuration
-
-bgp:
-  asn: 65001
-  router_id: 192.0.2.1
-  neighbors:
-    - ip: 192.0.2.2
-      remote_as: 65002
-      description: "ISP Connection"
-
-prefix_lists:
-  - name: "PL-ALLOWED"
-    entries:
-      - seq: 10
-        action: "permit"
-        prefix: "10.0.0.0/8"
-  
-interfaces:
-  - name: "Ethernet1"
-    description: "Uplink Interface"
-    ip_address: "192.0.2.10"
-    subnet_mask: 24
-
-vlans:
-  - id: 10
-    name: "Users"
+# Copy this file and customize for your specific device
 
 hostname: "NetworkDevice01"
+
+users:
+  - name: admin
+    secret: "5 $1$abc$xyz"
+
+enable_secret: "YourEnableSecret"
+
 ntp_servers:
   - "130.88.200.4"
   - "192.168.1.1"
@@ -37,4 +20,59 @@ snmp:
   hosts:
     - "10.0.0.1"
     - "10.0.0.2"
+
+# VLANs
+vlans:
+  - id: 10
+    name: "Users"
+  - id: 20
+    name: "Servers"
+
+# SVI Interfaces (Layer-3 VLAN interfaces)
+svi_interfaces:
+  - vlan_id: 10
+    description: "User subnet"
+    ip_address: "10.0.10.1"
+    subnet_mask: 24
+
+# Physical Interfaces
+interfaces:
+  - name: "Ethernet1"
+    description: "Uplink Interface"
+    ip_address: "192.0.2.10"
+    subnet_mask: 24
+  - name: "Ethernet2"
+    description: "Access Port"
+    switchport:
+      mode: "access"
+      access_vlan: 10
+
+# BGP Configuration
+bgp:
+  asn: 65001
+  router_id: "192.0.2.1"
+  neighbors:
+    - ip: "192.0.2.2"
+      remote_as: 65002
+      description: "ISP Connection"
+      timers:
+        keepalive: 30
+        holdtime: 90
+  networks:
+    - prefix: "10.0.10.0"
+      mask: 24
+
+# Prefix Lists (optional)
+prefix_lists:
+  - name: "PL-ALLOWED"
+    entries:
+      - seq: 10
+        action: "permit"
+        prefix: "10.0.0.0/8"
+
+# Static Routes (optional)
+static_routes:
+  - network: "0.0.0.0"
+    mask: 0
+    next_hop: "192.0.2.1"
 

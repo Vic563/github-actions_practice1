@@ -1,0 +1,36 @@
+---
+- name: Render Network Device Configurations
+  hosts: localhost
+  gather_facts: false
+  vars:
+    change_request_dir: "{{ change_request | default('CHG0000000') }}"
+    
+  tasks:
+    - name: Find all YAML configuration files in change request directory
+      find:
+        paths: "../changes/{{ change_request_dir }}"
+        patterns: "*_config.yml"
+      register: config_files
+
+    - name: Load device configuration data
+      include_vars:
+        file: "{{ item.path }}"
+        name: "device_{{ item.path | basename | regex_replace('_config.yml', '') }}"
+      loop: "{{ config_files.files }}"
+      when: config_files.files is defined
+
+    - name: Render Arista configuration for each device
+      template:
+        src: templates/arista_full_config.j2
+        dest: "../changes/{{ change_request_dir }}/{{ item.path | basename | regex_replace('_config.yml', '_config.txt') }}"
+      vars:
+        device_config: "{{ vars['device_' + (item.path | basename | regex_replace('_config.yml', ''))] }}"
+        device_name: "{{ item.path | basename | regex_replace('_config.yml', '') }}"
+      loop: "{{ config_files.files }}"
+      when: config_files.files is defined
+
+    - name: Display rendered configuration files
+      debug:
+        msg: "Rendered configuration for {{ item.path | basename | regex_replace('_config.yml', '') }}"
+      loop: "{{ config_files.files }}"
+      when: config_files.files is defined

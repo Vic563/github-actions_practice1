@@ -20,18 +20,19 @@ jobs:
       with:
         python-version: 3.8
 
-    - name: Install dependencies
+    - name: Install Ansible
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install ansible
 
-    - name: Render Configuration
+    - name: Render Configuration with Ansible
       run: |
-        for input_file in changes/**/*.yml; do
-          if [[ -f "$input_file" ]]; then
-            # Extract device name from filename (remove _config.yml suffix)
-            device_name=$(basename "$input_file" _config.yml)
-            python scripts/render_config.py "$input_file" --device-name "$device_name" --validate
+        cd ansible
+        for change_dir in ../changes/*/; do
+          if [[ -d "$change_dir" ]]; then
+            change_request=$(basename "$change_dir")
+            echo "Processing change request: $change_request"
+            ansible-playbook render_configs.yml -e "change_request=$change_request" -v
           fi
         done
 
